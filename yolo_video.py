@@ -1,19 +1,41 @@
-import sys
+import os
 import argparse
 from yolo import YOLO, detect_video
 from PIL import Image
+import json
+import keras.backend as K
+
+if 'tensorflow' == K.backend():
+    import tensorflow as tf
+from keras.backend.tensorflow_backend import set_session
+config2 = tf.ConfigProto()
+config2.gpu_options.allow_growth = True
+set_session(tf.Session(config=config2))
 
 def detect_img(yolo):
-    while True:
-        img = input('Input image filename:')
+    # test_file = '2012_val.txt'
+    test_file = 'val2017.txt'
+    if not os.path.isdir("results"):
+        os.mkdir("results")
+    with open(test_file) as f:
+        lines = f.readlines()
+    for line in lines:
+        img = line.split(' ')[0]
+    # img = '/home/newton/lifelong_learning/val2017/000000000872.jpg'#input('Input image filename:')
         try:
             image = Image.open(img)
         except:
             print('Open Error! Try again!')
-            continue
         else:
-            r_image = yolo.detect_image(image)
-            r_image.show()
+            try:
+                img_id = os.path.splitext(os.path.basename(img))[0].lstrip("0")
+                r_image = yolo.detect_image(image, img_id)
+                # r_image.show()
+                r_image.save('./results/{}'.format(os.path.basename(img)))
+            except TypeError:
+                print('TypeError: function takes exactly 1 argument (3 given)')
+
+    json.dump(yolo.eval_list, open('eval2017.json','w'))
     yolo.close_session()
 
 FLAGS = None
@@ -45,7 +67,7 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
-        '--image', default=False, action="store_true",
+        '--image', default=True, action="store_true",
         help='Image detection mode, will ignore all positional arguments'
     )
     '''
