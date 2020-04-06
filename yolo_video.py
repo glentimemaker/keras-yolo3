@@ -1,6 +1,6 @@
 import os
 import argparse
-from yolo import YOLO, detect_video
+from yolo2 import YOLO, detect_video
 from PIL import Image
 import json
 import keras.backend as K
@@ -28,8 +28,8 @@ def detect_img(yolo):
             print('Open Error! Try again!')
         else:
             try:
-                img_id = os.path.splitext(os.path.basename(img))[0].lstrip("0")
-                r_image = yolo.detect_image(image, img_id)
+                # img_id = os.path.splitext(os.path.basename(img))[0].lstrip("0")
+                r_image = yolo.detect_image(image, os.path.basename(img))
                 # r_image.show()
                 r_image.save('./results/{}'.format(os.path.basename(img)))
             except TypeError:

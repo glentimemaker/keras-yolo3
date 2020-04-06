@@ -357,6 +357,9 @@ def yolo_loss(args, anchors, num_classes, ignore_thresh=.5, print_loss=False):
     -------
     loss: tensor, shape=(1,)
 
+    output/groundtruth shape: (anchors/3) * (4 + 1 + num_classes)
+    note:  (4 + 1 + num_classes)|(4 + 1 + num_classes)|(4 + 1 + num_classes)
+
     '''
     num_layers = len(anchors)//3 # default setting
     yolo_outputs = args[:num_layers]
@@ -369,8 +372,8 @@ def yolo_loss(args, anchors, num_classes, ignore_thresh=.5, print_loss=False):
     mf = K.cast(m, K.dtype(yolo_outputs[0]))
 
     for l in range(num_layers):
-        object_mask = y_true[l][..., 4:5]
-        true_class_probs = y_true[l][..., 5:]
+        object_mask = y_true[l][..., 4:5] # object confidence, if the bbox is an object or not
+        true_class_probs = y_true[l][..., 5:] # class score
 
         grid, raw_pred, pred_xy, pred_wh = yolo_head(yolo_outputs[l],
              anchors[anchor_mask[l]], num_classes, input_shape, calc_loss=True)
@@ -405,7 +408,7 @@ def yolo_loss(args, anchors, num_classes, ignore_thresh=.5, print_loss=False):
         xy_loss = K.sum(xy_loss) / mf
         wh_loss = K.sum(wh_loss) / mf
         confidence_loss = K.sum(confidence_loss) / mf
-        class_loss = K.sum(class_loss) / mf
+        class_loss = K.sum(class_loss) / mf * 2
         loss += xy_loss + wh_loss + confidence_loss + class_loss
         if print_loss:
             loss = tf.Print(loss, [loss, xy_loss, wh_loss, confidence_loss, class_loss, K.sum(ignore_mask)], message='loss: ')

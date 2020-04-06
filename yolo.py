@@ -20,9 +20,9 @@ from keras.utils import multi_gpu_model
 
 class YOLO(object):
     _defaults = {
-        "model_path": 'logs/coco/ep003-loss35.585-val_loss30.727.h5',#'model_data/yolo.h5',
+        "model_path": 'logs/coco/ep053-loss16.656-val_loss15.924.h5',
         "anchors_path": 'model_data/yolo_anchors.txt',
-        # "classes_path": 'model_data/voc_classes.txt',
+        # "classes_path": 'model_data/coco_classes.txt',
         "classes_path": 'model_data/coco_classes_test.txt',
         "score" : 0.3,
         "iou" : 0.45,
@@ -44,7 +44,6 @@ class YOLO(object):
         self.anchors = self._get_anchors()
         self.sess = K.get_session()
         self.boxes, self.scores, self.classes = self.generate()
-        self.eval_list = []
 
     def _get_class(self):
         classes_path = os.path.expanduser(self.classes_path)
@@ -101,7 +100,7 @@ class YOLO(object):
                 score_threshold=self.score, iou_threshold=self.iou)
         return boxes, scores, classes
 
-    def detect_image(self, image, img_id):
+    def detect_image(self, image):
         start = timer()
 
         if self.model_image_size != (None, None):
@@ -127,17 +126,6 @@ class YOLO(object):
             })
 
         print('Found {} boxes for {}'.format(len(out_boxes), 'img'))
-        for i, box in enumerate(out_boxes):
-            cls = out_classes[i]
-            score = out_scores[i]
-            box[2] = box[2] - box[0]
-            box[3] = box[3] - box[1]
-            det_dict = {'image_id': img_id,
-                        'category_id': int(cls+1),
-                        'bbox': list(map(float, box)),
-                        'score': float(score)}
-            self.eval_list.append(det_dict)
-        # print(self.eval_list)
 
         font = ImageFont.truetype(font='font/FiraMono-Medium.otf',
                     size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
